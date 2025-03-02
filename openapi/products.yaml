@@ -1,15 +1,17 @@
-# openapi/product-api.yaml
 openapi: 3.0.1
 info:
   title: Product Service API
-  description: API for managing products
+  description: API for managing products in the shop
   version: 1.0.0
+servers:
+  - url: https://api.example.com/dev
+    description: Development server
 paths:
   /products:
     get:
       summary: Get all products
-      description: Returns a list of all products
-      operationId: getProducts
+      description: Returns a list of all products with their stock information
+      operationId: getProductsList
       responses:
         '200':
           description: Successful operation
@@ -18,17 +20,48 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Product'
+                  $ref: '#/components/schemas/ProductWithStock'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new product
+      description: Creates a new product with stock information
+      operationId: createProduct
+      requestBody:
+        description: Product object that needs to be added
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /products/{id}:
     get:
       summary: Get product by ID
-      description: Returns a single product by ID
+      description: Returns a single product by ID with stock information
       operationId: getProductById
       parameters:
         - name: id
@@ -37,13 +70,14 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductWithStock'
         '400':
           description: Invalid ID supplied
           content:
@@ -62,39 +96,105 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
 components:
   schemas:
     Product:
       type: object
-      properties:
-        id:
-          type: string
-          description: The product ID
-        title:
-          type: string
-          description: The product title
-        description:
-          type: string
-          description: The product description
-        price:
-          type: number
-          description: The product price
       required:
         - id
         - title
+        - description
         - price
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the product
+        title:
+          type: string
+          description: Title of the product
+        description:
+          type: string
+          description: Description of the product
+        price:
+          type: number
+          format: double
+          minimum: 0
+          description: Price of the product
+
+    ProductWithStock:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            count:
+              type: integer
+              minimum: 0
+              description: Available quantity in stock
+
+    ProductRequest:
+      type: object
+      required:
+        - title
+        - description
+        - price
+        - count
+      properties:
+        title:
+          type: string
+          description: Title of the product
+        description:
+          type: string
+          description: Description of the product
+        price:
+          type: number
+          format: double
+          minimum: 0
+          description: Price of the product
+        count:
+          type: integer
+          minimum: 0
+          description: Initial stock quantity
+
+    ProductResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Product created successfully
+        product:
+          $ref: '#/components/schemas/ProductWithStock'
+
     Error:
       type: object
       properties:
         message:
           type: string
           description: Error message
-      required:
-        - message
+        error:
+          type: string
+          description: Detailed error message (only in development)
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Validation failed
+        errors:
+          type: array
+          items:
+            type: string
+          example:
+            - Title is required
+            - Price must be a positive number
+
   securitySchemes:
-    apiKeyAuth:
+    ApiKeyAuth:
       type: apiKey
-      name: x-api-key
       in: header
+      name: x-api-key
+
 security:
-  - apiKeyAuth: []
+  - ApiKeyAuth: []

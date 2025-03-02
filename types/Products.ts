@@ -5,3 +5,7 @@ export interface Product {
   price: number;
   count: number;
 }
+
+export interface ProductWithStock extends Product {
+  count: number;
+}
