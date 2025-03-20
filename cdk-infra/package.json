@@ -6,6 +6,8 @@
   },
   "scripts": {
     "build": "tsc",
+    "deploy": "npm run build && cdk deploy",
+    "destroy": "cdk destroy",
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk"
