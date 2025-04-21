@@ -1,0 +1,189 @@
+openapi: 3.0.0
+info:
+  title: Products API
+  description: API for managing products
+  version: 1.0.0
+  contact:
+    email: waveee@gmail.com
+
+servers:
+  - url: https://zd34wens4b.execute-api.eu-central-1.amazonaws.com/prod
+    description: Development server
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Products
+    description: Products operations
+
+paths:
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Get all products
+      description: Returns a list of all available products
+      operationId: getProductsList
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      tags:
+        - Products
+      summary: Create a new product
+      description: Creates a new product in the database
+      operationId: createProduct
+      requestBody:
+        description: Product object that needs to be added to the store
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product by ID
+      description: Returns a single product by its ID
+      operationId: getProductsById
+      parameters:
+        - name: id
+          in: path
+          description: ID of the product to return
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+          description: The product unique identifier
+        title:
+          type: string
+          example: "Product Name"
+          description: The name of the product
+        price:
+          type: number
+          format: float
+          example: 99.99
+          description: The price of the product
+        description:
+          type: string
+          example: "Product description"
+          description: Detailed description of the product
+        count:
+          type: integer
+          example: 10
+          description: Available quantity of the product
+      required:
+        - id
+        - title
+        - price
+
+    ProductRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Product Name"
+          description: The name of the product
+        description:
+          type: string
+          example: "Product description"
+          description: Detailed description of the product
+        price:
+          type: number
+          format: float
+          example: 99.99
+          description: The price of the product
+        count:
+          type: integer
+          example: 10
+          description: Initial quantity of the product
+      required:
+        - title
+        - description
+        - price
+        - count
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Error message"
+          description: Error description
+        error:
+          type: string
+          example: "Detailed error information"
+          description: Additional error details
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
